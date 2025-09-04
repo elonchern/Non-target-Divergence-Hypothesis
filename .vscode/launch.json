@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: main",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "args": ["config_server_kitti.yaml"],
+            "console": "integratedTerminal",
+            "env": {
+                "MASTER_ADDR": "127.0.0.1",
+                "MASTER_PORT": "63445",
+                "WORLD_SIZE": "1",
+                "RANK": "0",
+                "LOCAL_RANK": "0"
+            }
+        }
+    ]
+}

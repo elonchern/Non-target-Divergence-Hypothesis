@@ -142,7 +142,8 @@ def train():
             else:
                 x_rgb = Variable(rgb.float()).cuda()
                 # y_pred = net(x_depth=x_depth, x_rgb=x_rgb, p=position)
-                y_pred = net(x_rgb=x_rgb, p=position)
+                # y_pred = net(x_rgb=x_rgb, p=position)
+                y_pred = net(x_depth=x_depth, p=position)
 
             y_pred = y_pred.permute(0, 2, 3, 4, 1).contiguous()  # (BS, C, D, H, W) --> (BS, D, H, W, C)
             y_pred = y_pred.view(-1, 12)  # C = 12
@@ -194,7 +195,8 @@ def validate_on_dataset_stsdf(model, date_loader, save_ply=False):
             else:
                 var_x_rgb = Variable(rgb.float()).cuda()
                 # y_pred = model(x_depth=var_x_depth, x_rgb=var_x_rgb, p=position)  # y_pred.size(): (bs, C, W, H, D)
-                y_pred = model(x_rgb=var_x_rgb, p=position)
+                # y_pred = model(x_rgb=var_x_rgb, p=position)
+                y_pred = model(x_depth=var_x_depth, p=position)
             y_pred = y_pred.cpu().data.numpy()  # CUDA to CPU, Variable to numpy
             y_true = y_true.numpy()  # torch tensor to numpy
             # print("y_true = {}".format(y_true.shape))

@@ -14,7 +14,7 @@ def eval_overlap_tag(loader, device, args):
     tea_type = 1 - stu_type
     # load teacher model
     tea_model = ImageNet().to(device) if tea_type == 0 else AudioNet().to(device)
-    tea_model.load_state_dict(torch.load('./results/teacher_mod_' + str(tea_type) + '_overlap.pkl', map_location={"cuda:0": "cpu"}))
+    tea_model.load_state_dict(torch.load('/home/elon/Workshops/Non-target-Divergence-Hypothesis/ravdess/results/teacher_mod_' + str(tea_type) + '_overlap.pkl', map_location={"cuda:0": "cpu"}))
     print(f'Finish Loading teacher model')
     train_acc, val_acc, test_acc = evaluate_allacc(loader, device, tea_model, tea_type)
     print(f'Teacher train | val | test acc {train_acc:.2f} | {val_acc:.2f} | {test_acc:.2f}')
@@ -49,7 +49,7 @@ def eval_overlap_tag(loader, device, args):
         net = ImageNet().to(device) if stu_type == 0 else AudioNet().to(device)
         optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9)
         log_np[run, :] = train_network_distill(stu_type, tea_model, args.num_epochs, loader, net, [args.gt_weight, args.pl_weight],
-                                               device, optimizer, [None] * 3, change_info_tea)
+                                               device, optimizer, [None] * 3, change_info_tea, args.distill)
     log_mean = np.mean(log_np, axis=0)
     log_std = np.std(log_np, axis=0)
     print(f'Finish {args.num_runs} runs')
@@ -63,21 +63,24 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', type=int, default=0, help='gpu id')
     parser.add_argument('--stu-type', type=int, default=0, help='the modality of student unimodal network, 0 for image, 1 for audio')
     parser.add_argument('--num-runs', type=int, default=1, help='num runs')
-    parser.add_argument('--num-epochs', type=int, default=100, help='num epochs')
+    parser.add_argument('--num-epochs', type=int, default=40, help='num epochs')
     parser.add_argument('--batch-size', type=int, default=64, help='batch size')
     parser.add_argument('--batch-size2', type=int, default=256, help='batch size for calculating the overlap tag')
     parser.add_argument('--num-workers', type=int, default=10, help='dataloader workers')
     parser.add_argument('--lr', type=float, default=1e-2, help='lr')
     parser.add_argument('--num-permute', type=int, default=10, help='number of permutation')
-    parser.add_argument('--first-time', default=True, action="store_true", help='train overlap model')
-    parser.add_argument('--cal_tag', default=True, action="store_true", help='calculate the amount of modality-decisive information for each feature channel')
-    parser.add_argument('--eval_tag', default=False,action="store_true", help='verify MFH based on our calculated tag')
+    parser.add_argument('--first-time', default=False, action="store_true", help='train overlap model')
+    parser.add_argument('--cal_tag', default=False, action="store_true", help='calculate the amount of modality-decisive information for each feature channel')
+    parser.add_argument('--eval_tag', default=True,action="store_true", help='verify MFH based on our calculated tag')
     parser.add_argument('--ratio', type=float, default=0.75, help='remove feature dimension ratio')
     parser.add_argument('--place', type=int, default=5, help='overlap tag place')
-    parser.add_argument('--mode', type=int, default=1, help='remove idx mode')
-    parser.add_argument('--gt-weight', type=float, default=0.0, help='gt loss weight')
+    parser.add_argument('--mode', type=int, default=0, help='remove idx mode')
+    parser.add_argument('--gt-weight', type=float, default=0.0, help='gt loss weight') # 0
     parser.add_argument('--pl-weight', type=float, default=1.0, help='pl loss weight')
-
+    # distillation
+    parser.add_argument('--distill', type=str, default='hint', choices=['kd', 'hint', 'attention', 'similarity',
+                                                                      'crd', 'kdsvd', 'dkd',
+                                                                      'rkd', 'pkt', ])
     args = parser.parse_args()
     print(args)
 

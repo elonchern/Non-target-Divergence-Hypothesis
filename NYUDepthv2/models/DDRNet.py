@@ -117,6 +117,9 @@ class SSC_RGBD_DDRNet(nn.Module):
         f3 = torch.add(x_6_d, x_6_r)
 
         x = torch.cat((f0, f1, f2, f3), dim=1)  # channels concatenate
+        # x = torch.cat((x0_rgb, x_4_r, x_5_r, x_6_r), dim=1)
+        # x = torch.cat((x0_depth, x_4_d, x_5_d, x_6_d), dim=1)
+        
         # print('SSC: channels concatenate x', x.size())  # (BS, 256L, 60L, 36L, 60L)
 
         x = self.aspp(x)
@@ -293,7 +296,7 @@ class SSC_Depth_DDRNet(nn.Module):
         x_6_d = self.res3d_3d(x_5_d)
 
         f3 = x_6_d
-
+        
         x = torch.cat((f0, f1, f2, f3), dim=1)  # channels concatenate
         # print('SSC: channels concatenate x', x.size())  # (BS, 256L, 60L, 36L, 60L)
 
@@ -308,3 +311,13 @@ if __name__ == '__main__':
     x = torch.rand(1, 1, 370,1220)
     y = torch.rand(1, 3, 480,640)
     out = model(x,y)
+    
+    def count_parameters(model):
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+    # 计算参数量
+    imagenet_params = count_parameters(model)
+
+
+    print(f"ImageNet model parameters: {imagenet_params}")

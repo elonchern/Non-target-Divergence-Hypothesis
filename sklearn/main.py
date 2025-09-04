@@ -348,7 +348,7 @@ def train_kd(seed, mod, teacher_model, x1_data, x2_data, y_data, x2_test, y_test
             error_output_mean,error_pl_mean = error_distribution(x1, x2, y_data, model,teacher_model)         
             # output_cmd = cmd(torch.softmax(y_pred[mask_tf.bool()] ,dim=1), torch.softmax(pl[mask_tf.bool()],dim=1),5)
             output_cmd = cmd(mask_target, mask_other,5)  
-           
+            tcjsd, ncjsd = js_divergence(pl,y_pred,y_data)
             
         if plot and (epoch % epochs == epochs-1):
             plt.plot(val_acc)
@@ -359,7 +359,7 @@ def train_kd(seed, mod, teacher_model, x1_data, x2_data, y_data, x2_test, y_test
     if save_model:
         return model,acc
     else:
-        return acc,error_output_mean,error_pl_mean,output_cmd
+        return acc,error_output_mean,error_pl_mean,ncjsd.cpu().detach().numpy()
     
     
 def run_exp(seed_num, vari_dim, fixed_dim,n_runs,distill):
@@ -481,7 +481,7 @@ def run_exp(seed_num, vari_dim, fixed_dim,n_runs,distill):
     return log1,log2,log3,log4,log5,log6,log7,log8,log9
 
 def exp(seed, n_runs,distill):
-    overlap_dim_list = [10,0]
+    overlap_dim_list =  [20,15,10,5,0]
     for overlap_dim in overlap_dim_list:
         
         gamma = overlap_dim/max(overlap_dim_list)
@@ -519,9 +519,9 @@ def exp(seed, n_runs,distill):
 if __name__ == '__main__':
     device  = torch.device('cuda:0')
     
-    # print("Exp 1: Modality Specifi with increase gamma on KL")
-    # exp(seed=42, n_runs = 10,distill='kl')
-    # print('-' * 80)
+    print("Exp 1: Modality Specifi with increase gamma on KL")
+    exp(seed=42, n_runs = 2,distill='kl')
+    print('-' * 80)
     
     # print("Exp 2: Modality Specifi with increase gamma on kl_PSSM")
     # exp(seed=42, n_runs = 10,distill='kl_PSSM')
@@ -548,9 +548,9 @@ if __name__ == '__main__':
     # exp(seed=42, n_runs=10, distill='similarity')   # Table 1 in the paper
     # print('-' * 80)     
 
-    print('Exp 8: KD with DKD') # Decoupled KD
-    exp(seed=42, n_runs=10, distill='dkd')   # Table 1 in the paper
-    print('-' * 80)          
+    # print('Exp 8: KD with DKD') # Decoupled KD
+    # exp(seed=42, n_runs=10, distill='dkd')   # Table 1 in the paper
+    # print('-' * 80)          
     
     # print('Exp 9: KD with DKD_PSSM') # Decoupled KD with PSSM
     # exp(seed=42, n_runs=10, distill='dkd_PSSM')   # Table 1 in the paper

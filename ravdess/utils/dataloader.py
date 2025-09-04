@@ -29,15 +29,15 @@ class AudioImageDataset(Dataset):
 
     def __getitem__(self, index):
         aud_name = os.path.join(self.audio_dir, self.df.iloc[index, 0])
-        audio = np.load(aud_name)
+        audio = np.load(aud_name) # [40, 256]
         # audio_wrk = torch.from_numpy(audio[newaxis, :, :]) without normalization, not preferred
         audio = self.aud_transform(audio[:, :, newaxis])
-        audio[:, :, [0, 2]] = audio[:, :, [2, 0]]
+        audio[:, :, [0, 2]] = audio[:, :, [2, 0]] # [1, 40, 256]
 
         img_name = os.path.join(self.image_dir, self.df.iloc[index, 1])
         image = cv2.imread(img_name)
         image[:, :, [0, 2]] = image[:, :, [2, 0]]
-        image = self.img_transform(image)
+        image = self.img_transform(image) # [3, 256, 512]
 
         sample = {'audio': audio, 'image': image, 'label': self.df.iloc[index, 2]}
         return sample

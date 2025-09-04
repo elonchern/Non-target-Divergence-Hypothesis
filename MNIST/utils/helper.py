@@ -15,6 +15,14 @@ from distiller_zoo.JS import JSDivergence
 from distiller_zoo.MSE import MSE
 from torch.utils.data import DataLoader, Dataset
 from torchvision import utils, datasets, transforms
+from distiller_zoo.DKD import DKDLoss
+from distiller_zoo.CRD import CRDLoss
+from utils.functions import ConvReg
+from distiller_zoo.FitNet import HintLoss
+from distiller_zoo.RKD import RKDLoss
+from distiller_zoo.PKT import PKT
+from distiller_zoo.SP import Similarity
+
 
 epoch_for_tag = 50
 epoch_for_retrain = 50
@@ -144,7 +152,7 @@ def train_network_baseline(in_type, epochs, loader, net, device, optimizer, chan
     val_best_acc, test_best_acc = 0, 0
     model_best = net
     criterion = torch.nn.CrossEntropyLoss()
-    # type == 0 train image network; type == 1 train audio network
+    
     for epoch in range(epochs):
         net.train()
         # train_loss = 0.0
@@ -199,11 +207,18 @@ def train_network_baseline(in_type, epochs, loader, net, device, optimizer, chan
 
 
 def train_network_distill(stu_type, tea_model, epochs, loader, net, weight, device, optimizer, change_info_stu,
-                          change_info_tea, save_model=False):
+                          change_info_tea, distill, save_model=False):
     val_best_acc, test_best_acc = 0, 0
     model_best = net
     criterion = torch.nn.CrossEntropyLoss()
-    criterion2 = torch.nn.KLDivLoss(reduction='mean')
+    criterion_pl = torch.nn.KLDivLoss(reduction='batchmean')
+    criterion_hint = HintLoss()
+    criterion_rkd = RKDLoss()
+    criterion_pkt = PKT()
+    criterion_sp = Similarity()
+    criterion_dkd = DKDLoss(0.5,0.5,1)
+    # criterion2 = torch.nn.KLDivLoss(reduction='batchmean')
+    # criterion2 = DKDLoss(0.06,0.94,1)
     # type == 0 train image network; type == 1 train audio network
     for epoch in range(epochs):
         net.train()
@@ -232,7 +247,31 @@ def train_network_distill(stu_type, tea_model, epochs, loader, net, weight, devi
                 raise ValueError("Undefined training type in distilled training")
             optimizer.zero_grad()
             tmp1 = weight[0] * criterion(outputs, labels)
-            tmp2 = weight[1] * criterion2(torch.log_softmax(outputs, dim=1), torch.softmax(pseu_label, dim=1))
+            
+            if distill == 'kl':
+                tmp2 = weight[1] * criterion_pl(torch.log_softmax(outputs, dim=1), torch.softmax(pseu_label, dim=1))
+            elif distill == 'hint':
+                regress_s = ConvReg(outputs.shape, pseu_label.shape).to(device)
+                f_s = regress_s(outputs)
+                loss_pl = 0.1*criterion_hint(f_s, pseu_label) + criterion_pl(torch.log_softmax(outputs,dim=1), torch.softmax(pseu_label, dim=1))
+                tmp2 = weight[1] * loss_pl
+            elif distill == 'rkd':
+                tmp2 = weight[1] * criterion_rkd(outputs, pseu_label)
+            elif distill == 'pkt':
+                loss_pl = criterion_pkt(outputs, pseu_label) + criterion_pl(torch.log_softmax(outputs,dim=1), torch.softmax(pseu_label, dim=1))
+                tmp2 = weight[1] * loss_pl
+            elif distill == 'similarity':
+                g_s = [outputs]
+                g_t = [pseu_label]
+                loss_group = criterion_sp(g_s, g_t)   
+                loss_pl = sum(loss_group) + criterion_pl(torch.log_softmax(outputs,dim=1), torch.softmax(pseu_label, dim=1)) 
+                tmp2 = weight[1] * loss_pl
+            elif distill == 'dkd':
+                tmp2 = weight[1] * criterion_dkd(outputs, pseu_label, labels)
+            else:
+                raise NotImplementedError
+            # tmp2 = weight[1] * criterion2(torch.log_softmax(outputs, dim=1), torch.softmax(pseu_label, dim=1))
+            # tmp2 = weight[1] * criterion2(outputs, pseu_label, labels)
             loss = tmp1 + tmp2
             loss.backward()
             optimizer.step()
@@ -246,7 +285,7 @@ def train_network_distill(stu_type, tea_model, epochs, loader, net, weight, devi
 
         if val_acc > val_best_acc:
             val_best_acc = val_acc
-            test_best_acc = test_acc
+            test_best_acc = test_acc 
             model_best = deepcopy(net)
 
         print(f"Epoch | All epochs: {epoch} | {epochs}")

@@ -77,7 +77,7 @@ class CrossModalData(Dataset):
         
         img,target = self.data_mnist[index],self.targets_mnist_m[index] #img 是tensor类型,shape [28,28]
         
-        noisy_image = self._add_noise(img, self.noise_level*3)
+        noisy_image = self._add_noise(img, self.noise_level*4)
         
         
         if self.transform is not None:
@@ -164,7 +164,7 @@ if __name__ == '__main__':
                                 transforms.Normalize(mean=[0.5], std=[0.5])])
 
     # 第一步：构造dataset对象
-    dataset = CrossModalData(args.data_root, transform=transform,noise_level=1,is_sample=False,k=None)
+    dataset = CrossModalData(args.data_root, transform=transform,noise_level=0.5,is_sample=False,k=None)
     
     # 第二步：构造dataloader对象
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)

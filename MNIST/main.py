@@ -108,7 +108,7 @@ def eval_overlap_tag(loader, device, args):
         net = MLP(input_dim=28*28*3).to(device) if stu_type == 0 else MLP(input_dim=28*28).to(device)
         optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9)
         log_np[run, :] = train_network_distill(stu_type, tea_model, args.num_epochs, loader, net, [args.gt_weight, args.pl_weight],
-                                               device, optimizer, [None] * 3, change_info_tea)
+                                               device, optimizer, [None] * 3, change_info_tea, args.distill)
     log_mean = np.mean(log_np, axis=0)
     log_std = np.std(log_np, axis=0)
     print(f'Finish {args.num_runs} runs')
@@ -184,14 +184,14 @@ if __name__ == '__main__':
     # the parameters you might need to change
     parser.add_argument('--data_root', default='/home/elon/Workshops/paper_KL_version2/MNIST/dataset/', help='data root [default: xxx]')
     parser.add_argument('--image_size', type=int, default=28, help='resize the image size [default: 32]')
-    parser.add_argument('--noise_level', type=int, default=1.5, help='noise_level from 0 to 5') # 1.5
+    parser.add_argument('--noise_level', type=int, default=1.0, help='noise_level from 0 to 5') # 1.5
     parser.add_argument('--gpu', type=int, default=0, help='gpu id')
     parser.add_argument('--stu-type', type=int, default=0, help='the modality of student unimodal network, 0 for MNIST-M, 1 for MNIST')
     parser.add_argument('--num-runs', type=int, default=1, help='num runs')
     parser.add_argument('--num-epochs', type=int, default=50, help='num epochs')
     parser.add_argument('--batch-size', type=int, default=128, help='batch size') # 128
     parser.add_argument('--num-workers', type=int, default=10, help='dataloader workers')
-    parser.add_argument('--lr', type=float, default=1e-2, help='lr')
+    parser.add_argument('--lr', type=float, default=1e-3, help='lr') # 1e-2
     parser.add_argument('--num-permute', type=int, default=10, help='number of permutation')
     parser.add_argument('--first-time', default=False, action="store_true", help='train overlap model')
     parser.add_argument('--cal_tag', default=False, action="store_true", help='calculate the amount of modality-decisive information for each feature channel')
@@ -201,11 +201,11 @@ if __name__ == '__main__':
     parser.add_argument('--ratio', type=float, default=0.75, help='remove feature dimension ratio')
     parser.add_argument('--place', type=int, default=1, help='overlap tag place')
     parser.add_argument('--mode', type=int, default=2, help='remove idx mode')
-    parser.add_argument('--gt-weight', type=float, default=1.0, help='gt loss weight')
-    parser.add_argument('--pl-weight', type=float, default=1.0, help='pl loss weight')
+    parser.add_argument('--gt-weight', type=float, default=0.5, help='gt loss weight') # 0.5
+    parser.add_argument('--pl-weight', type=float, default=0.5, help='pl loss weight')
     
     # distillation
-    parser.add_argument('--distill', type=str, default='kd', choices=['kd', 'hint', 'attention', 'similarity',
+    parser.add_argument('--distill', type=str, default='similarity', choices=['kd', 'hint', 'attention', 'similarity',
                                                                       'crd', 'kdsvd', 'dkd',
                                                                       'rkd', 'pkt', ])
     

@@ -247,14 +247,14 @@ class PMFNet(nn.Module):
         lidar_pred = self.lidar_stream(pcd_feature, img_feature)
 
         camera_pred = self.camera_stream_decoder(img_feature)
-
+       
         return lidar_pred, camera_pred 
 
 if __name__ == '__main__':
     import pc_processor
     import yaml
     import sys
-    sys.path.append('/home/elon/Projects/PMF-master/pc_processor/')
+    sys.path.append('/home/elon/Workshops/Non-target-Divergence-Hypothesis/semanticKITTI/pc_processor/')
     data_config_path = "/home/elon/Projects/PMF-master/pc_processor/dataset/semantic_kitti/semantic-kitti.yaml"
     trainset = pc_processor.dataset.semantic_kitti.SemanticKitti(root="/data/elon/semantic-kitti-fov/sequences",
                                                                  sequences=[0,1,2,3,4,5,6,7,9,10],
@@ -284,7 +284,8 @@ if __name__ == '__main__':
     pcd_feature = input_feature[:, 0:5] # dim = 5
     img_feature = input_feature[:, 5:8] # dim = 3
     
-    model = pc_processor.models.PMFNet(pcd_channels=5,
+    
+    model = PMFNet(pcd_channels=5,
                                         img_channels=3,
                                         nclasses=20,
                                         base_channels=32,
@@ -293,6 +294,14 @@ if __name__ == '__main__':
     
     lidar_pred, camera_pred = model(pcd_feature, img_feature)
     
-    print(lidar_pred.shape)
     
     
+    def count_parameters(model):
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+    # 计算参数量
+    imagenet_params = count_parameters(model)
+
+
+    print(f"ImageNet model parameters: {imagenet_params}")

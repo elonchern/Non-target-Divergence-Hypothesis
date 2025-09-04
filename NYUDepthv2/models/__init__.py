@@ -10,7 +10,7 @@ def make_model(modelname, num_classes):
     if modelname == 'palnet':
         return SSC_PALNet(num_classes)
     if modelname == 'ddrnet':
-        return SSC_RGB_DDRNet(num_classes) # SSC_RGBD_DDRNet(num_classes)
+        return SSC_Depth_DDRNet(num_classes) # SSC_RGBD_DDRNet(num_classes) SSC_Depth_DDRNet SSC_RGB_DDRNet
     if modelname == 'aicnet':
         return SSC_RGBD_AICNet(num_classes)
     if modelname == 'grfnet':

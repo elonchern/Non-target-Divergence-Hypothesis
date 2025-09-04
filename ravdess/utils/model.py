@@ -35,9 +35,9 @@ def my_freeze_new(x, index):  # in place modification
     # y = x
     y = x.clone()
 
-    # y[:, index] = 0
-    tmp_mean = x[:, index].mean(dim=0)
-    y[:, index] = tmp_mean
+    y[:, index] = 0
+    # tmp_mean = x[:, index].mean(dim=0)
+    # y[:, index] = tmp_mean
 
     return y
 
